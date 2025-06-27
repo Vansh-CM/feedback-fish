@@ -1,4 +1,3 @@
-*/
 (function() {
     'use strict';
 
@@ -13,33 +12,13 @@
 
         // 1. --- INJECT CSS ---
         // All necessary styles are defined here and injected into the page's <head>.
-        // Using a template literal makes it easy to write multi-line CSS.
+        // Note: Styles for the trigger button have been removed as you will provide your own.
         const css = `
             :root {
                 --feedback-primary-color: #007bff;
                 --feedback-primary-hover: #0056b3;
                 --feedback-success-color: #28a745;
                 --feedback-error-color: #dc3545;
-            }
-            .feedback-fab {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background-color: var(--feedback-primary-color);
-                color: white;
-                border: none;
-                border-radius: 50px;
-                padding: 15px 25px;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-                font-size: 16px;
-                font-weight: bold;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                cursor: pointer;
-                z-index: 9998;
-                transition: background-color 0.2s ease-in-out;
-            }
-            .feedback-fab:hover {
-                background-color: var(--feedback-primary-hover);
             }
             .feedback-modal {
                 display: none;
@@ -49,23 +28,25 @@
                 top: 0;
                 width: 100%;
                 height: 100%;
-                overflow: auto;
+                overflow: hidden; /* Prevent scrollbars during animation */
                 background-color: rgba(0,0,0,0.5);
                 -webkit-animation: fadeIn 0.3s;
                 animation: fadeIn 0.3s;
             }
             .feedback-modal-content {
+                position: absolute;
+                top: 20px;
+                right: 20px;
                 background-color: #fefefe;
-                margin: 10% auto;
                 padding: 25px;
                 border: 1px solid #888;
                 width: 90%;
-                max-width: 500px;
+                max-width: 450px;
                 border-radius: 8px;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.3);
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-                -webkit-animation: slideIn 0.4s;
-                animation: slideIn 0.4s;
+                -webkit-animation: slideInFromRight 0.4s;
+                animation: slideInFromRight 0.4s;
             }
             .feedback-modal-header {
                 display: flex;
@@ -152,8 +133,8 @@
             }
             @-webkit-keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
             @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-            @-webkit-keyframes slideIn { from {transform: translateY(-50px);} to {transform: translateY(0);} }
-            @keyframes slideIn { from {transform: translateY(-50px);} to {transform: translateY(0);} }
+            @-webkit-keyframes slideInFromRight { from {transform: translateX(100%);} to {transform: translateX(0);} }
+            @keyframes slideInFromRight { from {transform: translateX(100%);} to {transform: translateX(0);} }
         `;
         const styleTag = document.createElement('style');
         styleTag.type = 'text/css';
@@ -162,10 +143,8 @@
 
 
         // 2. --- INJECT HTML ---
-        // The full HTML structure for the button and modal is created here.
-        // It is then inserted at the end of the page body.
+        // The HTML for the modal is created here. The trigger button is NOT injected.
         const html = `
-            <button id="feedback-fab" class="feedback-fab">Feedback</button>
             <div id="feedback-modal" class="feedback-modal">
                 <div class="feedback-modal-content">
                     <div class="feedback-modal-header">
@@ -187,8 +166,8 @@
 
 
         // 3. --- ATTACH EVENT LISTENERS AND LOGIC ---
-        // After injecting the elements, we can get references to them and add functionality.
-        const fab = document.getElementById('feedback-fab');
+        // Find the user-provided trigger button and attach the event listener.
+        const triggerButton = document.getElementById('open-feedback-widget-button');
         const modal = document.getElementById('feedback-modal');
         const closeBtn = document.getElementById('feedback-close-btn');
         const form = document.getElementById('feedback-form');
@@ -196,7 +175,8 @@
         const submitButton = form.querySelector('button[type="submit"]');
 
         // Function to open the modal
-        const openModal = () => {
+        const openModal = (e) => {
+            e.preventDefault();
             modal.style.display = 'block';
         };
 
@@ -209,7 +189,14 @@
         };
 
         // --- Event Handlers ---
-        fab.addEventListener('click', openModal);
+
+        if (triggerButton) {
+            triggerButton.addEventListener('click', openModal);
+        } else {
+            console.warn('Feedback Widget: A trigger element with id="open-feedback-widget-button" was not found. The feedback modal cannot be opened.');
+            return; // Stop execution if no trigger is found
+        }
+        
         closeBtn.addEventListener('click', closeModal);
         window.addEventListener('click', (event) => {
             if (event.target === modal) {
